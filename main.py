@@ -14,15 +14,22 @@ def main():
 
 
     while True:
+        # Record game state snapshot to game_state.jsonl (for debugging).
         log_state()
 
+        # Process quit and other events.
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 return
+        # Clear the screen with a black background.
         screen.fill("black")
+        # Update player position and rotation from keyboard input.
         player.update(dt)
+        # Draw the player ship on the screen.
         player.draw(screen)
+        # Display the new frame.
         pygame.display.flip()
+        # Limit to 60 FPS and get time since last frame (delta time).
         dt = fps.tick(60) / 1000
 
 

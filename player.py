@@ -4,42 +4,51 @@ from constants import PLAYER_RADIUS, PLAYER_TURN_SPEED, PLAYER_SPEED
 
 class Player(CircleShape):
     def __init__(self, x, y):
+        # Initialize base CircleShape at (x, y) with player radius.
         super().__init__(x, y, PLAYER_RADIUS)
         self.rotation = 0
 
     def draw(self, screen):
-      return  pygame.draw.polygon(screen, "white", self.triangle(), LINE_WIDTH)
+        # Draw the ship as a white triangle (nose, left corner, right corner).
+        return pygame.draw.polygon(screen, "white", self.triangle(), LINE_WIDTH)
 
     def rotate(self, dt):
+        # Change rotation angle by turn speed * dt (positive = clockwise).
         self.rotation += PLAYER_TURN_SPEED * dt
 
     def update(self, dt):
+        # Get currently held keys to drive rotation and movement.
         keys = pygame.key.get_pressed()
 
         if keys[pygame.K_a]:
-           self.rotate(-dt) 
+            # Rotate left.
+            self.rotate(-dt)
         if keys[pygame.K_d]:
-           self.rotate(dt) 
+            # Rotate right.
+            self.rotate(dt)
         if keys[pygame.K_w]:
+            # Move forward in current facing direction.
             self.move(dt)
         if keys[pygame.K_s]:
+            # Move backward.
             self.move(-dt)
 
     def move(self, dt):
+        # Point (0, 1) rotated by ship heading, then scaled by speed and dt.
         unit_vector = pygame.Vector2(0, 1)
         rotated_vector = unit_vector.rotate(self.rotation)
         rotated_with_speed_vector = rotated_vector * PLAYER_SPEED * dt
+        # Apply movement to position.
         self.position += rotated_with_speed_vector
 
-
-    # in the Player class
     def triangle(self):
+        # Build three vertices: nose (forward) and two rear corners (left/right).
         forward = pygame.Vector2(0, 1).rotate(self.rotation)
         right = pygame.Vector2(0, 1).rotate(self.rotation + 90) * self.radius / 1.5
         a = self.position + forward * self.radius
         b = self.position - forward * self.radius - right
         c = self.position - forward * self.radius + right
-        
+
         return [a, b, c]
     
 
