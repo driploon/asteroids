@@ -1,6 +1,7 @@
 import pygame
 from circleshape import *
-from constants import PLAYER_RADIUS, PLAYER_TURN_SPEED, PLAYER_SPEED
+from shot import Shot
+from constants import PLAYER_RADIUS, PLAYER_SHOOT_SPEED, PLAYER_TURN_SPEED, PLAYER_SPEED, SHOT_RADIUS
 
 class Player(CircleShape):
     def __init__(self, x, y):
@@ -15,6 +16,14 @@ class Player(CircleShape):
     def rotate(self, dt):
         # Change rotation angle by turn speed * dt (positive = clockwise).
         self.rotation += PLAYER_TURN_SPEED * dt
+    
+    def shoot(self):
+        new_shot = Shot(self.position.x, self.position.y)
+        direction = pygame.Vector2(0, 1).rotate(self.rotation) 
+        new_shot.velocity = direction * PLAYER_SHOOT_SPEED
+
+        return new_shot
+
 
     def update(self, dt):
         # Get currently held keys to drive rotation and movement.
@@ -32,6 +41,10 @@ class Player(CircleShape):
         if keys[pygame.K_s]:
             # Move backward.
             self.move(-dt)
+        if keys[pygame.K_SPACE]:
+            # Shoot 
+            self.shoot()
+
 
     def move(self, dt):
         # Point (0, 1) rotated by ship heading, then scaled by speed and dt.
