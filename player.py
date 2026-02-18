@@ -1,13 +1,14 @@
 import pygame
 from circleshape import *
 from shot import Shot
-from constants import PLAYER_RADIUS, PLAYER_SHOOT_SPEED, PLAYER_TURN_SPEED, PLAYER_SPEED, SHOT_RADIUS
+from constants import PLAYER_RADIUS, PLAYER_SHOOT_SPEED, PLAYER_TURN_SPEED, PLAYER_SPEED, SHOT_RADIUS, PLAYER_SHOOT_COOLDOWN_SECONDS
 
 class Player(CircleShape):
     def __init__(self, x, y):
         # Initialize base CircleShape at (x, y) with player radius.
         super().__init__(x, y, PLAYER_RADIUS)
         self.rotation = 0
+        self.shot_cd_timer = 0
 
     def draw(self, screen):
         # Draw the ship as a white triangle (nose, left corner, right corner).
@@ -18,14 +19,19 @@ class Player(CircleShape):
         self.rotation += PLAYER_TURN_SPEED * dt
     
     def shoot(self):
-        new_shot = Shot(self.position.x, self.position.y)
-        direction = pygame.Vector2(0, 1).rotate(self.rotation) 
-        new_shot.velocity = direction * PLAYER_SHOOT_SPEED
+        if self.shot_cd_timer > 0:
+            return
+        else:
+            self.shot_cd_timer = PLAYER_SHOOT_COOLDOWN_SECONDS
+            new_shot = Shot(self.position.x, self.position.y)
+            direction = pygame.Vector2(0, 1).rotate(self.rotation) 
+            new_shot.velocity = direction * PLAYER_SHOOT_SPEED
 
         return new_shot
 
 
     def update(self, dt):
+        self.shot_cd_timer -= dt
         # Get currently held keys to drive rotation and movement.
         keys = pygame.key.get_pressed()
 
