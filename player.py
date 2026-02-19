@@ -1,7 +1,16 @@
 import pygame
 from circleshape import *
 from shot import Shot
-from constants import PLAYER_RADIUS, PLAYER_SHOOT_SPEED, PLAYER_TURN_SPEED, PLAYER_SPEED, SHOT_RADIUS, PLAYER_SHOOT_COOLDOWN_SECONDS
+from constants import (
+    PLAYER_RADIUS,
+    PLAYER_SHOOT_SPEED,
+    PLAYER_TURN_SPEED,
+    PLAYER_SPEED,
+    SHOT_RADIUS,
+    PLAYER_SHOOT_COOLDOWN_SECONDS,
+    OVERDRIVE_CHARGE_SECONDS,
+    OVERDRIVE_DURATION_SECONDS,
+)
 
 class Player(CircleShape):
     def __init__(self, x, y):
@@ -9,29 +18,46 @@ class Player(CircleShape):
         super().__init__(x, y, PLAYER_RADIUS)
         self.rotation = 0
         self.shot_cd_timer = 0
+        # Overdrive: charge for 20s, then no-cooldown shooting for 5s, then charge again.
+        self.overdrive_charge = 0.0
+        self.overdrive_active_timer = 0.0
+        self.in_overdrive = False  # set each frame in update()
 
     def draw(self, screen):
         # Draw the ship as a white triangle (nose, left corner, right corner).
-        return pygame.draw.polygon(screen, "white", self.triangle(), LINE_WIDTH)
+        player = pygame.draw.polygon(screen, "white", self.triangle(), LINE_WIDTH) 
+        return player,
 
     def rotate(self, dt):
         # Change rotation angle by turn speed * dt (positive = clockwise).
         self.rotation += PLAYER_TURN_SPEED * dt
     
     def shoot(self):
-        if self.shot_cd_timer > 0:
+        # Use overdrive mode set in update(); don't decide it here.
+        if not self.in_overdrive and self.shot_cd_timer > 0:
             return
-        else:
+
+        new_shot = Shot(self.position.x, self.position.y)
+        direction = pygame.Vector2(0, 1).rotate(self.rotation)
+        new_shot.velocity = direction * PLAYER_SHOOT_SPEED
+
+        if not self.in_overdrive:
             self.shot_cd_timer = PLAYER_SHOOT_COOLDOWN_SECONDS
-            new_shot = Shot(self.position.x, self.position.y)
-            direction = pygame.Vector2(0, 1).rotate(self.rotation) 
-            new_shot.velocity = direction * PLAYER_SHOOT_SPEED
-
-        return new_shot
-
 
     def update(self, dt):
-        self.shot_cd_timer -= dt
+        self.shot_cd_timer = max(0, self.shot_cd_timer - dt)
+
+        # Overdrive state machine
+        if self.overdrive_active_timer > 0:
+            self.overdrive_active_timer -= dt
+            if self.overdrive_active_timer <= 0:
+                self.overdrive_active_timer = 0
+                self.overdrive_charge = 0  # reset charge after overdrive ends
+        else:
+            self.overdrive_charge += dt
+            if self.overdrive_charge >= OVERDRIVE_CHARGE_SECONDS:
+                self.overdrive_active_timer = OVERDRIVE_DURATION_SECONDS
+                self.overdrive_charge = 0
         # Get currently held keys to drive rotation and movement.
         keys = pygame.key.get_pressed()
 
